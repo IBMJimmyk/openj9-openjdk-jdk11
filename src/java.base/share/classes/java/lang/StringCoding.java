@@ -916,12 +916,27 @@ class StringCoding {
         return Arrays.copyOf(dst, dp);
     }
 
+    private final static int asciiFastLoop(byte[] src, int sp, int len, byte[] dst, int dp) {
+        int n = 0;
+        while (n < len) {
+            char c = StringUTF16.getChar(src, sp++);
+            if (c < 0x80) {
+                dst[dp++] = (byte)c;
+                n++;
+                continue;
+            }
+            break;
+        }
+        return n;
+    }
+
     private static byte[] encodeUTF8_UTF16(byte[] val, boolean doReplace) {
         int dp = 0;
         int sp = 0;
         int sl = val.length >> 1;
         byte[] dst = new byte[sl * 3];
-        while (sp < sl) {
+
+        /*while (sp < sl) {
             // ascii fast loop;
             char c = StringUTF16.getChar(val, sp);
             if (c >= '\u0080') {
@@ -929,7 +944,12 @@ class StringCoding {
             }
             dst[dp++] = (byte)c;
             sp++;
-        }
+        }*/
+
+        int ret = asciiFastLoop(val, sp, sl, dst, dp);
+        dp = dp + ret;
+        sp = sp + ret;
+
         while (sp < sl) {
             char c = StringUTF16.getChar(val, sp++);
             if (c < 0x80) {
